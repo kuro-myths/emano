@@ -1,0 +1,36 @@
+# Lingkungan pengembangan. Salin .env.example menjadi .env lalu ubah DB_HOST=basis_data dan REDIS_HOST=redis.
+services:
+  aplikasi:
+    build: .
+    ports: ["8000:8000"]
+    env_file: .env
+    depends_on: [basis_data, redis]
+    volumes: [".:/var/www"]
+
+  pekerja:
+    build: .
+    command: php artisan queue:work --tries=3 --backoff=30 --max-time=3600
+    env_file: .env
+    depends_on: [basis_data, redis]
+    volumes: [".:/var/www"]
+
+  penjadwal:
+    build: .
+    command: php artisan schedule:work
+    env_file: .env
+    depends_on: [basis_data, redis]
+    volumes: [".:/var/www"]
+
+  basis_data:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: pusat_surat
+      POSTGRES_USER: pusat_surat
+      POSTGRES_PASSWORD: ganti-kata-sandi-ini
+    volumes: ["data_pg:/var/lib/postgresql/data"]
+
+  redis:
+    image: redis:7
+
+volumes:
+  data_pg:
